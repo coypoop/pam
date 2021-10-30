@@ -78,7 +78,9 @@ type Transaction struct {
 // transactionFinalizer cleans up the PAM handle and deletes the callback
 // function.
 func transactionFinalizer(t *Transaction) {
-	C.pam_end(t.handle, t.status)
+	if t.handle != nil {
+		C.pam_end(t.handle, t.status)
+	}
 	cbDelete(t.c)
 }
 
@@ -142,6 +144,10 @@ const (
 
 // SetItem sets a PAM information item.
 func (t *Transaction) SetItem(i Item, item string) error {
+	if t.handle == nil {
+		t.status = C.PAM_BAD_HANDLE
+		return t
+	}
 	cs := unsafe.Pointer(C.CString(item))
 	defer C.free(cs)
 	t.status = C.pam_set_item(t.handle, C.int(i), cs)
@@ -153,6 +159,10 @@ func (t *Transaction) SetItem(i Item, item string) error {
 
 // GetItem retrieves a PAM information item.
 func (t *Transaction) GetItem(i Item) (string, error) {
+	if t.handle == nil {
+		t.status = C.PAM_BAD_HANDLE
+		return "", t
+	}
 	var s unsafe.Pointer
 	t.status = C.pam_get_item(t.handle, C.int(i), &s)
 	if t.status != C.PAM_SUCCESS {
@@ -193,6 +203,10 @@ const (
 //
 // Valid flags: Silent, DisallowNullAuthtok
 func (t *Transaction) Authenticate(f Flags) error {
+	if t.handle == nil {
+		t.status = C.PAM_BAD_HANDLE
+		return t
+	}
 	t.status = C.pam_authenticate(t.handle, C.int(f))
 	if t.status != C.PAM_SUCCESS {
 		return t
@@ -205,6 +219,10 @@ func (t *Transaction) Authenticate(f Flags) error {
 //
 // Valid flags: EstablishCred, DeleteCred, ReinitializeCred, RefreshCred
 func (t *Transaction) SetCred(f Flags) error {
+	if t.handle == nil {
+		t.status = C.PAM_BAD_HANDLE
+		return t
+	}
 	t.status = C.pam_setcred(t.handle, C.int(f))
 	if t.status != C.PAM_SUCCESS {
 		return t
@@ -216,6 +234,10 @@ func (t *Transaction) SetCred(f Flags) error {
 //
 // Valid flags: Silent, DisallowNullAuthtok
 func (t *Transaction) AcctMgmt(f Flags) error {
+	if t.handle == nil {
+		t.status = C.PAM_BAD_HANDLE
+		return t
+	}
 	t.status = C.pam_acct_mgmt(t.handle, C.int(f))
 	if t.status != C.PAM_SUCCESS {
 		return t
@@ -227,6 +249,10 @@ func (t *Transaction) AcctMgmt(f Flags) error {
 //
 // Valid flags: Silent, ChangeExpiredAuthtok
 func (t *Transaction) ChangeAuthTok(f Flags) error {
+	if t.handle == nil {
+		t.status = C.PAM_BAD_HANDLE
+		return t
+	}
 	t.status = C.pam_chauthtok(t.handle, C.int(f))
 	if t.status != C.PAM_SUCCESS {
 		return t
@@ -238,6 +264,10 @@ func (t *Transaction) ChangeAuthTok(f Flags) error {
 //
 // Valid flags: Slient
 func (t *Transaction) OpenSession(f Flags) error {
+	if t.handle == nil {
+		t.status = C.PAM_BAD_HANDLE
+		return t
+	}
 	t.status = C.pam_open_session(t.handle, C.int(f))
 	if t.status != C.PAM_SUCCESS {
 		return t
@@ -249,6 +279,10 @@ func (t *Transaction) OpenSession(f Flags) error {
 //
 // Valid flags: Silent
 func (t *Transaction) CloseSession(f Flags) error {
+	if t.handle == nil {
+		t.status = C.PAM_BAD_HANDLE
+		return t
+	}
 	t.status = C.pam_close_session(t.handle, C.int(f))
 	if t.status != C.PAM_SUCCESS {
 		return t
@@ -262,6 +296,10 @@ func (t *Transaction) CloseSession(f Flags) error {
 // NAME= will set a variable to an empty value.
 // NAME (without an "=") will delete a variable.
 func (t *Transaction) PutEnv(nameval string) error {
+	if t.handle == nil {
+		t.status = C.PAM_BAD_HANDLE
+		return t
+	}
 	cs := C.CString(nameval)
 	defer C.free(unsafe.Pointer(cs))
 	t.status = C.pam_putenv(t.handle, cs)
@@ -273,6 +311,9 @@ func (t *Transaction) PutEnv(nameval string) error {
 
 // GetEnv is used to retrieve a PAM environment variable.
 func (t *Transaction) GetEnv(name string) string {
+	if t.handle == nil {
+		return ""
+	}
 	cs := C.CString(name)
 	defer C.free(unsafe.Pointer(cs))
 	value := C.pam_getenv(t.handle, cs)
@@ -288,6 +329,10 @@ func next(p **C.char) **C.char {
 
 // GetEnvList returns a copy of the PAM environment as a map.
 func (t *Transaction) GetEnvList() (map[string]string, error) {
+	if t.handle == nil {
+		t.status = C.PAM_BAD_HANDLE
+		return nil, t
+	}
 	env := make(map[string]string)
 	p := C.pam_getenvlist(t.handle)
 	if p == nil {
