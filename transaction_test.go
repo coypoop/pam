@@ -13,7 +13,7 @@ func TestPAM_001(t *testing.T) {
 		t.Skip("run this test as root")
 	}
 	p := "secret"
-	tx, err := StartFunc("", "test", func(s Style, msg string) (string, error) {
+	tx, err := StartFunc("passwd", "test", func(s Style, msg string) (string, error) {
 		return p, nil
 	})
 	if err != nil {
@@ -39,7 +39,7 @@ func TestPAM_002(t *testing.T) {
 	if u.Uid != "0" {
 		t.Skip("run this test as root")
 	}
-	tx, err := StartFunc("", "", func(s Style, msg string) (string, error) {
+	tx, err := StartFunc("passwd", "", func(s Style, msg string) (string, error) {
 		switch s {
 		case PromptEchoOn:
 			return "test", nil
@@ -82,7 +82,7 @@ func TestPAM_003(t *testing.T) {
 		User:     "test",
 		Password: "secret",
 	}
-	tx, err := Start("", "", c)
+	tx, err := Start("passwd", "", c)
 	if err != nil {
 		t.Fatalf("start #error: %v", err)
 	}
@@ -101,7 +101,7 @@ func TestPAM_004(t *testing.T) {
 	c := Credentials{
 		Password: "secret",
 	}
-	tx, err := Start("", "test", c)
+	tx, err := Start("passwd", "test", c)
 	if err != nil {
 		t.Fatalf("start #error: %v", err)
 	}
@@ -157,7 +157,7 @@ func TestPAM_007(t *testing.T) {
 	if u.Uid != "0" {
 		t.Skip("run this test as root")
 	}
-	tx, err := StartFunc("", "test", func(s Style, msg string) (string, error) {
+	tx, err := StartFunc("passwd", "test", func(s Style, msg string) (string, error) {
 		return "", errors.New("Sorry, it didn't work")
 	})
 	if err != nil {
@@ -210,7 +210,7 @@ func TestItem(t *testing.T) {
 }
 
 func TestEnv(t *testing.T) {
-	tx, err := StartFunc("", "", func(s Style, msg string) (string, error) {
+	tx, err := StartFunc("passwd", "", func(s Style, msg string) (string, error) {
 		return "", nil
 	})
 	if err != nil {
